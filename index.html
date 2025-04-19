@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLIENT - CN Project</title>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="map"></div>
+  <button id="seeChanges">see</button>
+  <button id="requestButton" onclick="openModal()">+</button>
+
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" onclick="closeModal(event)">&times;</span>
+      <h2>Register a Disaster</h2>
+      <label for="locationName">Location Name:
+        <input type="text" id="locationName" placeholder="city - area">
+      </label>
+      <label for="emergencyType">Emergency Type:
+        <input type="text" id="emergencyType" placeholder="as flood / tsunami / earthquake">
+      </label>
+      <label for="latitude">Latitude of Place:
+        <input type="text" id="latitude" placeholder="Enter latitude">
+      </label>
+      <label for="longitude">Longitude of Place:
+        <input type="text" id="longitude" placeholder="Enter longitude">
+      </label>
+      <button id="currbutton" onclick="fetchLocation()">Use My Current Location</button>
+      <label><br></label>
+      <label for="radius">Radius (meters):
+        <input type="text" id="radius" placeholder="Enter radius of the area affected(in meters)">
+      </label>
+      <button id="submitButton" onclick="submitRequest()">Submit Request</button>
+    </div>
+  </div>
+  
+  <script>
+    // Map initialization moved to disaster-map.js
+    // to prevent duplicate initialization
+
+    // Modal handling functions
+    function openModal() {
+      const modal = document.getElementById("myModal");
+      if (modal) {
+        modal.style.display = "flex";
+      }
+    }
+    function closeModal(event) {
+      const modal = document.getElementById("myModal");
+      if (modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    // Submit a new disaster request
+    function submitRequest() {
+        console.log("this button is pressed");
+      var locationName = document.getElementById("locationName").value;
+      var emergencyType = document.getElementById("emergencyType").value;
+      var lat = parseFloat(document.getElementById("latitude").value);
+      var lng = parseFloat(document.getElementById("longitude").value);
+      var radius = parseFloat(document.getElementById("radius").value);
+
+      if (!locationName || !emergencyType || isNaN(lat) || isNaN(lng) || isNaN(radius)) {
+        alert("Please fill in all fields correctly.");
+        return;
+      }
+
+      // Create a new request object.
+      const disasterDetails = {
+        locationName,
+        emergencyType,
+        lat,
+        lng,
+        radius,
+        status: 'pending'
+      };
+
+      // Save it to the pending list.
+      let disasterRequests = JSON.parse(localStorage.getItem('disasterRequests')) || [];
+      disasterRequests.push(disasterDetails);
+      localStorage.setItem('disasterRequests', JSON.stringify(disasterRequests));
+
+      alert("Disaster details saved successfully!");
+      closeModal();
+    }
+
+    // Fetch current geographic coordinates
+    function fetchLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            document.getElementById("latitude").value = latitude.toFixed(6);
+            document.getElementById("longitude").value = longitude.toFixed(6);
+            alert("Your current location has been filled in the form!");
+          },
+          error => {
+            alert("Unable to fetch your location. Please check your browser settings.");
+          },
+          { timeout: 10000 }
+        );
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    }
+
+    // Load any approved disasters on page load
+    window.onload = function() {
+      let approvedDisasters = JSON.parse(localStorage.getItem("approvedDisasters")) || [];
+      if (approvedDisasters.length > 0) {
+        displayApprovedDisaster(approvedDisasters[approvedDisasters.length - 1]);
+      }
+    };
+  </script>
+</body>
+<script src="script.js"></script>
+<script src="disaster-map.js"></script>
+</html>
